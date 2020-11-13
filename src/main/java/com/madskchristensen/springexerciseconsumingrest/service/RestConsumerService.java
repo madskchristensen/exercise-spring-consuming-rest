@@ -6,20 +6,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class RestConsumerService {
-    final RestTemplate restTemplate;
-    private final String catUrl;
-    private final String quoteUrl;
+    private final RestTemplate restTemplate;
+    private final Map<String, URL> urlMap = new HashMap<>();
 
-    public RestConsumerService(RestTemplate restTemplate) {
+    public RestConsumerService(RestTemplate restTemplate) throws MalformedURLException {
         this.restTemplate = restTemplate;
-        this.catUrl = "http://cat-fact.herokuapp.com/facts/random";
-        this.quoteUrl = "https://gturnquist-quoters.cfapps.io/api/random";
+        populateUrlMap();
+    }
+
+    private void populateUrlMap() throws MalformedURLException {
+        this.urlMap.put("catFact", new URL("http://cat-fact.herokuapp.com/facts"));
+        this.urlMap.put("quote", new URL("https://gturnquist-quoters.cfapps.io/api"));
+    }
+
+    private String getUrlAsStringForModel(String model) {
+        return this.urlMap.get(model).toString();
     }
 
     private CatFact fetchRandomCatFact() {
-        return restTemplate.getForObject(getQueryUrl(catUrl), CatFact.class);
+        return restTemplate.getForObject(getQueryUrl(getUrlAsStringForModel("catFact") + "/random"), CatFact.class);
     }
 
     public CatFact fetchRandomValidCatFact() {
@@ -40,6 +52,6 @@ public class RestConsumerService {
 
     public Quote fetchSingleQuote() {
 
-        return restTemplate.getForObject(getQueryUrl(quoteUrl), Quote.class);
+        return restTemplate.getForObject(getQueryUrl(getUrlAsStringForModel("quote") + "/random"), Quote.class);
     }
 }
